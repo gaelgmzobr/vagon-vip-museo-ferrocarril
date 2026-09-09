@@ -1,4 +1,11 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vagón VIP</title>
+</head>
+<body>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Lora:ital,wght@0,400;0,500;0,600;1,500&display=swap');
 
@@ -21,6 +28,7 @@
     --incorrect: #9a3320;
     --incorrect-bg: #e3d1c6;
     --shadow: rgba(15, 13, 10, 0.4);
+    --band-fg: #ece6d6;
     --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.45 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
@@ -44,6 +52,8 @@
       --incorrect: #d9805f;
       --incorrect-bg: #3a2620;
       --shadow: rgba(0, 0, 0, 0.55);
+    --band-fg: #ece6d6;
+      --band-fg: #ece6d6;
     }
   }
 
@@ -178,8 +188,8 @@
     font-size: 0.68rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--ground);
-    opacity: 0.6;
+    color: var(--band-fg);
+    opacity: 0.7;
     text-align: center;
     max-width: 720px;
     margin: 0 auto;
@@ -215,9 +225,11 @@
   .btn-round:active{ transform: scale(0.96); }
   .btn-round.is-ghost{
     background: transparent;
-    border-color: var(--rule);
-    color: var(--ground);
+    border-color: var(--band-fg);
+    color: var(--band-fg);
+    opacity: 0.85;
   }
+  .btn-round.is-ghost:hover{ opacity: 1; }
 
   .seek{
     flex: 1 1 140px;
@@ -229,7 +241,7 @@
   .time{
     font-family: 'Montserrat', sans-serif;
     font-variant-numeric: tabular-nums;
-    color: var(--ground);
+    color: var(--band-fg);
     font-size: 0.8rem;
     min-width: 78px;
     text-align: center;
@@ -238,7 +250,7 @@
 
   select.speed{
     background: var(--iron-deep);
-    color: var(--ground);
+    color: var(--band-fg);
     border: 1px solid var(--rust);
     border-radius: 8px;
     padding: 7px 10px;
@@ -654,17 +666,26 @@
     vid.playbackRate = Number(speed.value);
   });
 
-  // ---- fullscreen ----
+  // ---- fullscreen (desktop/Android via Fullscreen API, iOS Safari via the video's own native fullscreen) ----
   const fsBtn = document.getElementById('fsBtn');
   const screenEl = document.querySelector('.screen');
   fsBtn.addEventListener('click', () => {
     const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
-    if (!fsEl) {
-      const req = screenEl.requestFullscreen || screenEl.webkitRequestFullscreen;
-      if (req) req.call(screenEl);
-    } else {
+    if (fsEl) {
       const exit = document.exitFullscreen || document.webkitExitFullscreen;
-      if (exit) exit.call(document);
+      if (exit) { exit.call(document); }
+      return;
+    }
+    const req = screenEl.requestFullscreen || screenEl.webkitRequestFullscreen;
+    if (req) {
+      req.call(screenEl).catch(() => {
+        if (typeof vid.webkitEnterFullscreen === 'function') vid.webkitEnterFullscreen();
+      });
+    } else if (typeof vid.webkitEnterFullscreen === 'function') {
+      // iOS Safari: divs can't go fullscreen, only <video> has a native fullscreen mode
+      vid.webkitEnterFullscreen();
+    } else if (typeof vid.requestFullscreen === 'function') {
+      vid.requestFullscreen();
     }
   });
 
@@ -697,3 +718,5 @@
     navigator.mediaSession.setActionHandler('seekforward', (d) => { vid.currentTime = Math.min(vid.duration, vid.currentTime + (d.seekOffset || 10)); });
   }
 </script>
+</body>
+</html>
